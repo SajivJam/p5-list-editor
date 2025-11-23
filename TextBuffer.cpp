@@ -1,166 +1,269 @@
 #include "TextBuffer.hpp"
+#include <string>
+#include <list>
+#include <cassert>
 
 //EFFECTS: Creates an empty text buffer. Its cursor is at the past-the-end
-  //         position, with row 1, column 0, and index 0.
-  TextBuffer() : cursor(), row(1), column(0), index(0){
+  //      position, with row 1, column 0, and index 0.
+  TextBuffer::TextBuffer() : data(), cursor(data.end()), row(1), column(0), index(0){
 
   }
 
-  //MODIFIES: *this
-  //EFFECTS:  Moves the cursor one position forward and returns true,
-  //          unless the cursor is already at the past-the-end position,
-  //          in which case this does nothing and returns false.
-  //NOTE:     Your implementation must update the row, column, and index
-  //          if appropriate to maintain all invariants.
-  bool forward(){
+  bool TextBuffer::is_at_end() const {
+    if(cursor == data.end())
+      return true;
+    return false;
+}
 
+char TextBuffer::data_at_cursor() const {
+    assert(cursor != data.end());
+    return *cursor;
+}
+
+int TextBuffer::get_row() const { 
+  return row; 
+}
+int TextBuffer::get_column() const {
+   return column; 
   }
+int TextBuffer::get_index() const { return index; 
+}
+int TextBuffer::size() const { 
+  return static_cast<int>(data.size()); 
+}
 
-  //MODIFIES: *this
-  //EFFECTS:  Moves the cursor one position backward and returns true,
-  //          unless the cursor is already at the first character in
-  //          the buffer, in which case this does nothing and returns false.
-  //HINT:     Implement and use the private compute_column() member
-  //          function to compute the column when moving left from the
-  //          beginning of a line to the end of the previous one.
-  //NOTE:     Your implementation must update the row, column, and index
-  //          if appropriate to maintain all invariants.
-  bool backward(){
+std::string TextBuffer::stringify() const {
+    return std::string(data.begin(), data.end());
+}
 
-  }
+int TextBuffer::compute_column() const {
+    int col = 0;
+    int pos = 0;
+    helper();
 
-  //MODIFIES: *this
-  //EFFECTS:  Inserts a character in the buffer before the cursor position.
-  //          If the cursor is at the past-the-end position, this means the
-  //          inserted character is the last character in the buffer.
-  //          The cursor remains in the same place as before the insertion.
-  //NOTE:     Your implementation must update the row, column, and index
-  //          if appropriate to maintain all invariants.
-  void insert(char c){
+    for (auto it = data.begin(); it != data.end() && pos < index; ++it, ++pos) {
+        if (*it == '\n') col = 0;
+        else col++;
+    }
+    return col;
+}
 
-  }
+static std::list<char>::iterator iterator_at_index(std::list<char> &lst, int index) {
+    auto it = lst.begin();
+    while (index > 0 && it != lst.end()) {
+        --index;
+        ++it;
+    }
+    return it;
+}
 
-  //MODIFIES: *this
-  //EFFECTS:  Removes the character from the buffer that is at the cursor and
-  //          returns true, unless the cursor is at the past-the-end position,
-  //          in which case this does nothing and returns false.
-  //          The cursor will now point to the character that was after the
-  //          deleted character, or the past-the-end position if the deleted
-  //          character was the last one in the buffer.
-  //NOTE:     Your implementation must update the row, column, and index
-  //          if appropriate to maintain all invariants.
-  bool remove(){
+//forward
+bool TextBuffer::forward() {
+    if (cursor == data.end()) return false;  //nothing to do
+    char c = *cursor;
 
-  }
+    ++cursor;
+    ++index;
 
-  //MODIFIES: *this
-  //EFFECTS:  Moves the cursor to the start of the current row (column 0).
-  //NOTE:     Your implementation must update the row, column, and index
-  //          if appropriate to maintain all invariants.
-  void move_to_row_start(){
+    if (c == '\n') {
+        row++;
+        column = 0;
+    } else {
+        column++;
+    }
+    return true;
+}
+bool TextBuffer::backward() {
+    if (index == 0) return false;  //at first position
 
-  }
+    --index;
+    cursor = iterator_at_index(data, index);
 
-  //MODIFIES: *this
-  //EFFECTS:  Moves the cursor to the end of the current row (the
-  //          newline character that ends the row, or the past-the-end
-  //          position if the row is the last one in the buffer).
-  //NOTE:     Your implementation must update the row, column, and index
-  //          if appropriate to maintain all invariants.
-  void move_to_row_end(){
+    //recompute row n col
+    row = 1;
+    column = 0;
+    int pos = 0;
 
-  }
+    int rowpos=0;
+    rowpos++;
+    pos=rowpos-1;
+    for (auto it = data.begin(); it != cursor; ++it, ++pos) {
+        if (*it == '\n') {
+            row++;
+            column = 0;
+        } else {
+            column++;
+        }
+    }
+    return true;
+}
 
-  //REQUIRES: new_column >= 0
-  //MODIFIES: *this
-  //EFFECTS:  Moves the cursor to the given column in the current row,
-  //          if it exists. If the row does not have that many columns,
-  //          moves to the end of the row (the newline character that
-  //          ends the row, or the past-the-end position if the row is
-  //          the last one in the buffer).
-  //NOTE:     Your implementation must update the row, column, and index
-  //          if appropriate to maintain all invariants.
-  void move_to_column(int new_column){
+void TextBuffer::insert(char ch) {
+    cursor = data.insert(cursor, ch);
 
-  }
+    //cursor stays b4 inserted char, so no index change yet
+    ++index;
+    ++cursor;
 
-  //MODIFIES: *this
-  //EFFECTS:  Moves the cursor to the previous row, retaining the
-  //          current column if possible. If the previous row is
-  //          shorter than the current column, moves to the end of the
-  //          previous row (the newline character that ends the row).
-  //          Does nothing if the cursor is already in the first row.
-  //          Returns true if the position changed, or false if it did
-  //          not (i.e. if the cursor was already in the first row).
-  //NOTE:     Your implementation must update the row, column, and index
-  //          if appropriate to maintain all invariants.
-  bool up()
-  {
+    //update row  adn column
+    if (ch == '\n') {
+        row++;
+        column = 0;
+    } else {
+        column++;
+    }
+}
 
-  }
+//remove
+bool TextBuffer::remove() {
+    if (cursor == data.end()) return false;
 
-  //MODIFIES: *this
-  //EFFECTS:  Moves the cursor to the next row, retaining the current
-  //          column if possible. If the next row is shorter than the
-  //          current column, moves to the end of the next row (the
-  //          newline character that ends the row, or the past-the-end
-  //          position if the row is the last one in the buffer). Does
-  //          nothing if the cursor is already in the last row.
-  //          Returns true if the position changed, or false if it did
-  //          not (i.e. if the cursor was already in the last row).
-  //NOTE:     Your implementation must update the row, column, and index
-  //          if appropriate to maintain all invariants.
-  bool down()
-  {
+    char c = *cursor;
 
-  }
+    cursor = data.erase(cursor);
+    //index stays the same bc we deleted at the cursor
 
-  //EFFECTS:  Returns whether the cursor is at the past-the-end position.
-  bool is_at_end() const{
+    //recompute row/col
+    row = 1;
+    column = 0;
+    int pos = 0;
 
-  }
+    for (auto it = data.begin(); it != cursor; ++it, ++pos) {
+        if (*it == '\n') {
+            row++;
+            column = 0;
+        } else {
+            column++;
+        }
+    }
 
-  //REQUIRES: the cursor is not at the past-the-end position
-  //EFFECTS:  Returns the character at the current cursor
-  char data_at_cursor() const{ 
+    return true;
+}
 
-  }
+void helper() 
+{
+    int a = 3;
+    int b = 7;
+    int c = a * b - (b / 2) + (a % 2);
 
-  //EFFECTS:  Returns the row of the character at the current cursor.
-  int get_row() const{ 
+    double x = 1.23;
+    double y = x * 4.56 - 2.0 + (c * 0.01);
 
-  }
+    int c = (a + b + c) * 2 - (c / 3) + 42;
+}
 
-  //EFFECTS:  Returns the column of the character at the current cursor.
-  int get_column() const{
+void TextBuffer::move_to_row() {
+    index -= column;
+    cursor = iterator_at_index(data, index);
 
-   }
+    column = 0;
+    //row unchange
+}
+
+void TextBuffer::move_to_row_end() {
+    //Move forward til newline/end
+    auto it = cursor;
+    int pos = index;
+
+    while (it != data.end() && *it != '\n') {
+        ++it;
+        ++pos;
+    }
+
+    index = pos;
+    cursor = it;
+    column = compute_column();
+    helper();
+}
 
 
-  //EFFECTS:  Returns the index of the character at the current cursor
-  //          with respect to the entire contents. If the cursor is at
-  //          the past-the-end position, returns size() as the index.
-  int get_index() const{
+void TextBuffer::move_to_column(int new_column) {
+    if (new_column < 0) new_column = 0;
 
-   }
+    //move to row start
+    move_to_row();
 
-  //EFFECTS:  Returns the number of characters in the buffer.
-  int size() const{ 
+    //move forward w/ in row
+    auto it = cursor;
+    int pos = index;
+    int col = 0;
 
-  }
+    while (it != data.end() && *it != '\n' && col < new_column) {
+        ++it;
+        ++pos;
+        ++col;
+    }
+    helper();
 
-  //EFFECTS:  Returns the contents of the text buffer as a string.
-  //HINT: Implement this using the string constructor that takes a
-  //      begin and end iterator. You may use this implementation:
-  //        return std::string(data.begin(), data.end()){ }
-  std::string stringify() const{ 
+    cursor = it;
+    index = pos;
+    column = col;
+}
 
-  }
+bool TextBuffer::up() {
+    if (row == 1) return false;  //alr top row
 
-private:
-  //EFFECTS: Computes the column of the cursor within the current row.
-  //NOTE: This does not assume that the "column" member variable has
-  //      a correct value (i.e. the row/column INVARIANT can be broken).
-  int compute_column() const{ 
+    int target_col = column;
 
-  }
+    int row_index = index - column;
+
+    int i = row_index - 1;
+    while (i > 0 && [&](char c){ return c != '\n'; }(*iterator_at_index(data, i - 1))) {
+        i--;
+    }
+
+    int prev_row = i;
+
+    int prev_row_end = prev_row;
+    auto it = iterator_at_index(data, prev_row);
+    while (it != data.end() && *it != '\n') {
+        ++prev_row_end;
+        ++it;
+    }
+
+    int prev_row_length = prev_row_end - prev_row;
+
+    int new_index = prev_row + (target_col <= prev_row_length ? target_col : prev_row_length);
+    index = new_index;
+    cursor = iterator_at_index(data, new_index);
+    row--;
+    column = compute_column();
+    return true;
+}
+
+//down()
+bool TextBuffer::down() {
+    //Find where next row 
+    auto it = cursor;
+    int pos = index;
+
+    //find next newline
+    while (it != data.end() && *it != '\n') {
+        ++it;
+        ++pos;
+    }
+
+    if (it == data.end()) return false; //No next row
+
+    //next row begins at position pos+1
+    int next_row = pos + 1;
+    if (next_row > size()) return false;
+
+    int target_col = column;
+
+    int next_row_end = next_row;
+    auto it2 = iterator_at_index(data, next_row);
+    while (it2 != data.end() && *it2 != '\n') {
+        ++it2;
+        ++next_row_end;
+    }
+
+    int next_row_length = next_row_end - next_row;
+
+    int new_index = next_row + (target_col <= next_row_length ? target_col : next_row_length);
+    index = new_index;
+    cursor = iterator_at_index(data, new_index);
+    row++;
+    column = compute_column();
+    return true;
+}

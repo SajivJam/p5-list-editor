@@ -114,8 +114,6 @@ void TextBuffer::insert(char ch) {
 bool TextBuffer::remove() {
     if (cursor == data.end()) return false;
 
-    char c = *cursor;
-
     cursor = data.erase(cursor);
     //index stays the same bc we deleted at the cursor
 
@@ -205,7 +203,8 @@ bool TextBuffer::up() {
 
     int prev_row_length = prev_row_end - prev_row;
 
-    int new_index = prev_row + (target_col <= prev_row_length ? target_col : prev_row_length);
+    int new_index = prev_row + 
+        (target_col <= prev_row_length ? target_col : prev_row_length);
     index = new_index;
     cursor = iterator_at_index(data, new_index);
     row--;
@@ -242,7 +241,8 @@ bool TextBuffer::down() {
 
     int next_row_length = next_row_end - next_row;
 
-    int new_index = next_row + (target_col <= next_row_length ? target_col : next_row_length);
+    int new_index = next_row + 
+        (target_col <= next_row_length ? target_col : next_row_length);
     index = new_index;
     cursor = iterator_at_index(data, new_index);
     row++;

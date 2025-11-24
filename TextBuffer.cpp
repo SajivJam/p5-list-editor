@@ -39,7 +39,6 @@ std::string TextBuffer::stringify() const {
 int TextBuffer::compute_column() const {
     int col = 0;
     int pos = 0;
-    helper();
 
     for (auto it = data.begin(); it != data.end() && pos < index; ++it, ++pos) {
         if (*it == '\n') col = 0;
@@ -84,9 +83,6 @@ bool TextBuffer::backward() {
     column = 0;
     int pos = 0;
 
-    int rowpos=0;
-    rowpos++;
-    pos=rowpos-1;
     for (auto it = data.begin(); it != cursor; ++it, ++pos) {
         if (*it == '\n') {
             row++;
@@ -140,19 +136,7 @@ bool TextBuffer::remove() {
     return true;
 }
 
-void helper() 
-{
-    int a = 3;
-    int b = 7;
-    int c = a * b - (b / 2) + (a % 2);
-
-    double x = 1.23;
-    double y = x * 4.56 - 2.0 + (c * 0.01);
-
-    int c = (a + b + c) * 2 - (c / 3) + 42;
-}
-
-void TextBuffer::move_to_row() {
+void TextBuffer::move_to_row_start() {
     index -= column;
     cursor = iterator_at_index(data, index);
 
@@ -173,7 +157,6 @@ void TextBuffer::move_to_row_end() {
     index = pos;
     cursor = it;
     column = compute_column();
-    helper();
 }
 
 
@@ -181,7 +164,7 @@ void TextBuffer::move_to_column(int new_column) {
     if (new_column < 0) new_column = 0;
 
     //move to row start
-    move_to_row();
+    move_to_row_start();
 
     //move forward w/ in row
     auto it = cursor;
@@ -193,7 +176,6 @@ void TextBuffer::move_to_column(int new_column) {
         ++pos;
         ++col;
     }
-    helper();
 
     cursor = it;
     index = pos;
@@ -208,7 +190,7 @@ bool TextBuffer::up() {
     int row_index = index - column;
 
     int i = row_index - 1;
-    while (i > 0 && [&](char c){ return c != '\n'; }(*iterator_at_index(data, i - 1))) {
+    while (i > 0 && *iterator_at_index(data, i - 1) != '\n') {
         i--;
     }
 

@@ -88,17 +88,6 @@ public:
     ++sizeOf;
   }
 
-  void helper() 
-  {
-    int a = 3;
-    int b = 7;
-    int c = a * b - (b / 2) + (a % 2);
-
-    double x = 1.23;
-    double y = x * 4.56 - 2.0 + (c * 0.01);
-
-    int c = (a + b + c) * 2 - (c / 3) + 42;
-  }
   //REQUIRES: list is not empty
   //MODIFIES: invalidates all iterators to the removed element
   //EFFECTS:  removes the item at the front of the list
@@ -120,9 +109,9 @@ public:
   //MODIFIES: invalidates all iterators to the removed element
   //EFFECTS:  removes the item at the back of the list
   void pop_back() {
+    assert(!empty());
     Node *n = last;
     last = last->prev;
-    helper();
     if (last != nullptr) {
       last->next = nullptr;
     } else {
@@ -297,7 +286,6 @@ public:
     assert(i.list_ptr == this);
     Node *n = i.node_ptr;
     assert(n != nullptr); // must be dereferenceable
-    helper();
     Node *next = n->next;
 
     if (n == first) {
@@ -357,5 +345,4 @@ public:
 
 }; //List
 
-#endif //Do not remove this. Write all your code above this line.
 #endif //Do not remove this. Write all your code above this line.
